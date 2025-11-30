@@ -467,3 +467,61 @@ export const roleSummaries: RoleSummary[] = [
     permissions: ["Manage all users", "Approve institutions", "Launch featured series"],
   },
 ];
+
+export const pageContent = {
+  home: {
+    heroKicker: "Academic + policy network",
+    heroTitle: "Diplomatic seminars and institutional briefings across BRICS and multilateral partners.",
+    heroSubtitle:
+      "Track flagship seminars, request institutional access, and review thematic series curated with universities, think tanks, and multilateral organizations.",
+    stats: [
+      { label: "Institutions onboarded", value: `${institutions.length}+` },
+      { label: "Series running", value: `${series.length}` },
+      { label: "Scholars registered", value: "12k+" },
+    ],
+  },
+  pricing: {
+    heroKicker: "Access model",
+    heroTitle: "Open briefings, individual research seats, institutional cohorts",
+    heroSubtitle:
+      "Demonstration plans showing how academics join live seminars, unlock recordings, and coordinate institutional programs.",
+    faqs: [
+      {
+        question: "Can I join without payment?",
+        answer: "Yes. Open Access includes live open seminars and weekly digests with no cost.",
+      },
+      {
+        question: "How do institutions join?",
+        answer: "Institution admins activate the institutional plan to unlock closed-door events and analytics.",
+      },
+      {
+        question: "Do plans include recordings?",
+        answer: "Research Network and Institutional plans include the full recording archive with transcripts.",
+      },
+    ],
+  },
+  recordings: {
+    heroKicker: "Recording library",
+    heroTitle: "Diplomatic archive",
+    heroSubtitle: "Filter by topic, institution, or speaker to surface recent recordings with transcripts and briefs.",
+    badges: [
+      { label: "Curated briefs" },
+      { label: "Transcript-ready" },
+      { label: "Institutional access" },
+    ],
+  },
+  host: {
+    quickTips: [
+      "Publish events at least 10 days before the session.",
+      "Upload materials 48 hours in advance for registered participants.",
+      "Mark recordings as available within 24 hours of completion.",
+    ],
+  },
+  admin: {
+    notices: [
+      "Review pending institutions weekly to keep the directory fresh.",
+      "Cross-check access levels for flagship sessions before promotion.",
+      "Monitor subscription churn and reach out to expiring institutions.",
+    ],
+  },
+};

@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { Carousel } from "@/components/ui/Carousel";
 import { EventPosterCard } from "@/components/events/EventPosterCard";
 import { EventCard } from "@/components/events/EventCard";
-import { events, institutions, recordings, roleSummaries, series } from "@/lib/mockData";
+import { events, institutions, pageContent, recordings, roleSummaries, series } from "@/lib/mockData";
 import { formatDateTime, formatDuration } from "@/lib/utils";
 
 const flagshipHighlights = events.filter((event) => event.isFlagship && event.status !== "completed").slice(0, 3);
@@ -17,9 +17,9 @@ const upcomingEvents = events.filter((event) => event.status === "upcoming" || e
 const themeOptions = ["all", ...new Set(events.map((event) => event.category))];
 
 const stats = [
-  { label: "Institutions onboarded", value: `${institutions.length}+`, icon: Shield },
-  { label: "Series running", value: `${series.length}`, icon: Layers },
-  { label: "Scholars registered", value: "12k+", icon: Users },
+  { label: pageContent.home.stats[0].label, value: pageContent.home.stats[0].value, icon: Shield },
+  { label: pageContent.home.stats[1].label, value: pageContent.home.stats[1].value, icon: Layers },
+  { label: pageContent.home.stats[2].label, value: pageContent.home.stats[2].value, icon: Users },
 ];
 
 export default function Home() {
@@ -49,12 +49,8 @@ export default function Home() {
           <Badge label="Academic + policy network" />
           <div className="space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-(--text-secondary)">Global Academic Forum</p>
-            <h1 className="text-4xl font-semibold leading-tight text-foreground lg:text-5xl">
-              Diplomatic seminars and institutional briefings across BRICS and multilateral partners.
-            </h1>
-            <p className="max-w-2xl text-lg text-(--text-secondary)">
-              Track flagship seminars, request institutional access, and review thematic series curated with universities, think tanks, and multilateral organizations.
-            </p>
+            <h1 className="text-4xl font-semibold leading-tight text-foreground lg:text-5xl">{pageContent.home.heroTitle}</h1>
+            <p className="max-w-2xl text-lg text-(--text-secondary)">{pageContent.home.heroSubtitle}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button size="lg" href="/events">

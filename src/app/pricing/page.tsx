@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { subscriptionPlans } from "@/lib/mockData";
+import { pageContent, subscriptionPlans } from "@/lib/mockData";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,10 +34,18 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-10">
-      <section className="space-y-3 rounded-4xl border border-(--border-subtle) bg-surface p-6 shadow-(--shadow-card)">
-        <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Access model</p>
-        <h1 className="text-4xl font-semibold text-foreground">Open briefings, individual research seats, institutional cohorts</h1>
-        <p className="text-(--text-secondary)">Demonstration plans showing how academics join live seminars, unlock recordings, and coordinate institutional programs.</p>
+      <section className="space-y-4 rounded-4xl border border-(--border-subtle) bg-surface p-6 shadow-(--shadow-card)">
+        <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">{pageContent.pricing.heroKicker}</p>
+        <h1 className="text-4xl font-semibold text-foreground">{pageContent.pricing.heroTitle}</h1>
+        <p className="text-(--text-secondary)">{pageContent.pricing.heroSubtitle}</p>
+        <div className="grid gap-3 md:grid-cols-3">
+          {pageContent.pricing.faqs.map((faq) => (
+            <div key={faq.question} className="rounded-3xl border border-(--border-subtle) bg-white p-4 text-sm text-(--text-secondary)">
+              <p className="text-sm font-semibold text-foreground">{faq.question}</p>
+              <p className="mt-1">{faq.answer}</p>
+            </div>
+          ))}
+        </div>
       </section>
       <div className="grid gap-6 md:grid-cols-3">
         {openAccessPlan && (

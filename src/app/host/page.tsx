@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
-import { events } from "@/lib/mockData";
+import { events, pageContent } from "@/lib/mockData";
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "numeric" }).format(
@@ -116,6 +116,14 @@ export default function HostOverviewPage() {
             </li>
           ))}
           {completedEvents.length === 0 && <li>No completed events yet.</li>}
+        </ul>
+      </div>
+      <div className="rounded-4xl border border-(--border-subtle) bg-surface p-6 shadow-(--shadow-soft)">
+        <h2 className="text-xl font-semibold text-foreground">Host quick tips</h2>
+        <ul className="mt-3 space-y-2 text-sm text-(--text-secondary)">
+          {pageContent.host.quickTips.map((tip) => (
+            <li key={tip}>�?� {tip}</li>
+          ))}
         </ul>
       </div>
     </div>

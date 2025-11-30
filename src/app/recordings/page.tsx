@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { FileText, Lock, Users } from "lucide-react";
-import { events, institutions, recordings, series } from "@/lib/mockData";
+import { events, institutions, pageContent, recordings, series } from "@/lib/mockData";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
@@ -54,9 +54,16 @@ export default function LibraryPage() {
       <section className="space-y-6 rounded-4xl border border-(--border-subtle) bg-surface p-6 shadow-(--shadow-card)">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Recording library</p>
-            <h1 className="mt-2 text-4xl font-semibold text-foreground">Diplomatic archive</h1>
-            <p className="mt-2 text-(--text-secondary)">Filter by topic, institution, or speaker to surface recent recordings with transcripts and downloadable briefs.</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">{pageContent.recordings.heroKicker}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-foreground">{pageContent.recordings.heroTitle}</h1>
+            <p className="mt-2 text-(--text-secondary)">{pageContent.recordings.heroSubtitle}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {pageContent.recordings.badges.map((badge) => (
+                <span key={badge.label} className="rounded-full border border-(--border-subtle) bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-(--text-secondary)">
+                  {badge.label}
+                </span>
+              ))}
+            </div>
           </div>
           <div className="flex flex-wrap gap-3">
             <Select value={topic} onChange={(event) => setTopic(event.target.value)}>

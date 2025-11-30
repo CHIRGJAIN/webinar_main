@@ -5,7 +5,7 @@ import { ChartPlaceholder } from "@/components/dashboard/ChartPlaceholder";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
-import { events, institutions, mockUsers, subscriptions } from "@/lib/mockData";
+import { events, institutions, mockUsers, pageContent, subscriptions } from "@/lib/mockData";
 import { DashboardStat } from "@/lib/types";
 
 export default function AdminOverviewPage() {
@@ -91,6 +91,14 @@ export default function AdminOverviewPage() {
             {flagshipEvents.length === 0 && <p className="text-sm text-(--text-secondary)">No flagship series defined.</p>}
           </div>
         </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {pageContent.admin.notices.map((notice) => (
+          <div key={notice} className="rounded-3xl border border-(--border-subtle) bg-surface p-4 text-sm text-(--text-secondary)">
+            {notice}
+          </div>
+        ))}
       </div>
     </div>
   );
