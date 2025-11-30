@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, CalendarDays, Layers, MapPin, PlayCircle, Shield, Users } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Layers, MapPin, PlayCircle, Shield, Users } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Carousel } from "@/components/ui/Carousel";
 import { EventPosterCard } from "@/components/events/EventPosterCard";
 import { EventCard } from "@/components/events/EventCard";
+import { IconButton } from "@/components/ui/IconButton";
 import { events, institutions, pageContent, recordings, roleSummaries, series } from "@/lib/mockData";
 import { formatDateTime, formatDuration } from "@/lib/utils";
 
@@ -22,8 +24,27 @@ const stats = [
   { label: pageContent.home.stats[2].label, value: pageContent.home.stats[2].value, icon: Users },
 ];
 
+const heroGallery = [
+  {
+    url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600",
+    title: "Flagship seminar",
+    caption: "Hybrid briefing with institutional partners and scholars",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1600",
+    title: "Panel discussion",
+    caption: "Cross-regional roundtable on digital public infrastructure",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=1600",
+    title: "Academic cohort",
+    caption: "Collaborative working session with research fellows",
+  },
+];
+
 export default function Home() {
   const [theme, setTheme] = useState("all");
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const filteredUpcoming = useMemo(() => {
     if (theme === "all") return upcomingEvents;
@@ -35,6 +56,13 @@ export default function Home() {
       const event = events.find((candidate) => candidate.id === recording.eventId);
       return { recording, event };
     });
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeroIndex((previous) => (previous + 1) % heroGallery.length);
+    }, 4200);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -73,17 +101,48 @@ export default function Home() {
             ))}
           </div>
         </div>
-        <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-(--text-secondary)">Flagship seminars</p>
-          {flagshipHighlights.length ? (
-            <Carousel>
-              {flagshipHighlights.map((event) => (
-                <EventPosterCard key={event.id} event={event} />
-              ))}
-            </Carousel>
-          ) : (
-            <p className="text-sm text-(--text-secondary)">New flagship seminars are announced weekly.</p>
-          )}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-[0.3em] text-(--text-secondary)">Flagship seminars</p>
+            <div className="flex gap-2">
+              <IconButton subtle aria-label="Previous hero image" onClick={() => setHeroIndex((previous) => (previous - 1 + heroGallery.length) % heroGallery.length)}>
+                <ChevronLeft size={16} />
+              </IconButton>
+              <IconButton subtle aria-label="Next hero image" onClick={() => setHeroIndex((previous) => (previous + 1) % heroGallery.length)}>
+                <ChevronRight size={16} />
+              </IconButton>
+            </div>
+          </div>
+          <div className="relative overflow-hidden rounded-4xl border border-(--border-subtle) bg-surface-alt shadow-(--shadow-soft) min-h-[320px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={heroGallery[heroIndex].url}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.6 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={heroGallery[heroIndex].url}
+                  alt={heroGallery[heroIndex].title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 640px"
+                  priority
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-[rgba(36,21,10,0.65)] via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-(--border-subtle) bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-(--text-secondary)">
+                    {heroGallery[heroIndex].title}
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-foreground drop-shadow-[0_1px_4px_rgba(0,0,0,0.28)]">
+                    {heroGallery[heroIndex].caption}
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </motion.section>
 
@@ -115,8 +174,8 @@ export default function Home() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Featured institutions</p>
-            <h2 className="text-3xl font-semibold text-foreground">BRICS & international partners</h2>
+            {/* <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Featured institutions</p> */}
+            <h2 className="text-3xl font-semibold text-foreground">Featured institutions</h2>
           </div>
           <Button variant="ghost" href="/institutions/academic">
             Browse academic institutions
