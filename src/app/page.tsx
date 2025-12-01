@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import "./home.css";
 
 type BadgeType = "LIVE" | "SCHEDULED" | "NEW" | "INSTITUTIONAL";
@@ -117,16 +118,21 @@ export default function Home() {
   };
 
   const heroCard = sections[0].items[heroIndex % sections[0].items.length] || sections[0].items[0];
+  const heroStyle: CSSProperties = {
+    ["--hero-visibility" as any]: heroVisibility,
+    pointerEvents: heroVisibility < 0.12 ? "none" : "auto",
+  };
+  const contentStyle: CSSProperties = {
+    ["--section-opacity" as any]: sectionElevate.opacity,
+    ["--section-translate" as any]: `${sectionElevate.translate}px`,
+  };
 
   return (
     <div className="page-shell">
       <div
         ref={heroRef}
         className="hero hero--edge"
-        style={{
-          "--hero-visibility": heroVisibility,
-          pointerEvents: heroVisibility < 0.12 ? "none" : "auto",
-        }}
+        style={heroStyle}
       >
         <div ref={parallaxRef} className="hero__bg" aria-hidden>
           <Image src={HERO_IMAGE_URL} alt="BRICS webinar visual" fill priority sizes="100vw" style={{ objectFit: "cover" }} />
@@ -163,13 +169,7 @@ export default function Home() {
         </div>
       </div>
 
-      <main
-        className="content"
-        style={{
-          "--section-opacity": sectionElevate.opacity,
-          "--section-translate": `${sectionElevate.translate}px`,
-        }}
-      >
+      <main className="content" style={contentStyle}>
         {sections.map((section, sectionIdx) => (
           <section key={section.title} className="row">
             <div className="row__header">
@@ -187,11 +187,13 @@ export default function Home() {
                 </button>
               )}
               <div
-                className="row__track"
-                ref={(el) => (carouselRefs.current[sectionIdx] = el)}
-                role="list"
-                aria-label={`${section.title} carousel`}
-              >
+              className="row__track"
+              ref={(el) => {
+                carouselRefs.current[sectionIdx] = el;
+              }}
+              role="list"
+              aria-label={`${section.title} carousel`}
+            >
                 {section.items.map((item, itemIdx) => (
                   <article
                     key={item.id}
