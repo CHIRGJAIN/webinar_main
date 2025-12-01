@@ -1,306 +1,246 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Layers, MapPin, PlayCircle, Shield, Users } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
-import { Carousel } from "@/components/ui/Carousel";
-import { EventPosterCard } from "@/components/events/EventPosterCard";
-import { EventCard } from "@/components/events/EventCard";
-import { IconButton } from "@/components/ui/IconButton";
-import { events, institutions, pageContent, recordings, roleSummaries, series } from "@/lib/mockData";
-import { formatDateTime, formatDuration } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState } from "react";
+import "./home.css";
 
-const flagshipHighlights = events.filter((event) => event.isFlagship && event.status !== "completed").slice(0, 3);
-const upcomingEvents = events.filter((event) => event.status === "upcoming" || event.status === "live");
-const themeOptions = ["all", ...new Set(events.map((event) => event.category))];
+type BadgeType = "LIVE" | "SCHEDULED" | "NEW" | "INSTITUTIONAL";
 
-const stats = [
-  { label: pageContent.home.stats[0].label, value: pageContent.home.stats[0].value, icon: Shield },
-  { label: pageContent.home.stats[1].label, value: pageContent.home.stats[1].value, icon: Layers },
-  { label: pageContent.home.stats[2].label, value: pageContent.home.stats[2].value, icon: Users },
+type Webinar = {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  badgeType: BadgeType;
+  datetime: string;
+};
+
+const HERO_IMAGE_URL = "https://picsum.photos/seed/brics-hero/2000/1200"; // replace with your BRICS/global webinar hero image
+const CARD_SCROLL_STEP = 236; // (220px card + 16px gap) * 1 card; used for arrow navigation
+
+const sampleWebinars: Webinar[] = [
+  { id: "w1", title: "Live: Sustainable Trade Routes", thumbnailUrl: "https://picsum.photos/seed/live1/640/360", badgeType: "LIVE", datetime: "2025-03-12T14:00:00Z" },
+  { id: "w2", title: "Digital Public Infra Forum", thumbnailUrl: "https://picsum.photos/seed/live2/640/360", badgeType: "LIVE", datetime: "2025-03-12T16:30:00Z" },
+  { id: "w3", title: "BRICS Climate Dialogue", thumbnailUrl: "https://picsum.photos/seed/sched1/640/360", badgeType: "SCHEDULED", datetime: "2025-03-15T10:00:00Z" },
+  { id: "w4", title: "New: Health Tech Cohort", thumbnailUrl: "https://picsum.photos/seed/new1/640/360", badgeType: "NEW", datetime: "2025-03-18T09:30:00Z" },
+  { id: "w5", title: "Institutional Analytics", thumbnailUrl: "https://picsum.photos/seed/inst1/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-03-20T12:00:00Z" },
+  { id: "w6", title: "Cross-border Education", thumbnailUrl: "https://picsum.photos/seed/sched2/640/360", badgeType: "SCHEDULED", datetime: "2025-03-22T13:00:00Z" },
+  { id: "w7", title: "Energy Transition Brief", thumbnailUrl: "https://picsum.photos/seed/sub1/640/360", badgeType: "NEW", datetime: "2025-03-25T15:30:00Z" },
+  { id: "w8", title: "Policy Lab: AI Safety", thumbnailUrl: "https://picsum.photos/seed/sub2/640/360", badgeType: "NEW", datetime: "2025-03-28T11:00:00Z" },
+  { id: "w9", title: "Global Health Forum", thumbnailUrl: "https://picsum.photos/seed/live3/640/360", badgeType: "LIVE", datetime: "2025-04-01T12:00:00Z" },
+  { id: "w10", title: "Energy Security Roundtable", thumbnailUrl: "https://picsum.photos/seed/sched3/640/360", badgeType: "SCHEDULED", datetime: "2025-04-03T09:30:00Z" },
+  { id: "w11", title: "Trade Policy Deep Dive", thumbnailUrl: "https://picsum.photos/seed/new3/640/360", badgeType: "NEW", datetime: "2025-04-05T15:00:00Z" },
+  { id: "w12", title: "Institutional Governance", thumbnailUrl: "https://picsum.photos/seed/inst2/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-04-08T10:00:00Z" },
+  { id: "w13", title: "Live: Maritime Corridors", thumbnailUrl: "https://picsum.photos/seed/live4/640/360", badgeType: "LIVE", datetime: "2025-04-10T14:00:00Z" },
+  { id: "w14", title: "Scheduled: Green Finance", thumbnailUrl: "https://picsum.photos/seed/sched4/640/360", badgeType: "SCHEDULED", datetime: "2025-04-12T09:00:00Z" },
+  { id: "w15", title: "Subscribed: Cultural Exchange", thumbnailUrl: "https://picsum.photos/seed/new4/640/360", badgeType: "NEW", datetime: "2025-04-14T11:30:00Z" },
+  { id: "w16", title: "Institutional: Education Pact", thumbnailUrl: "https://picsum.photos/seed/inst3/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-04-16T16:00:00Z" },
+  { id: "w17", title: "Live: Agri-Tech Cohort", thumbnailUrl: "https://picsum.photos/seed/live5/640/360", badgeType: "LIVE", datetime: "2025-04-18T12:00:00Z" },
+  { id: "w18", title: "Scheduled: Urban Resilience", thumbnailUrl: "https://picsum.photos/seed/sched5/640/360", badgeType: "SCHEDULED", datetime: "2025-04-20T10:30:00Z" },
+  { id: "w19", title: "Subscribed: Culture Summit", thumbnailUrl: "https://picsum.photos/seed/new5/640/360", badgeType: "NEW", datetime: "2025-04-22T17:30:00Z" },
+  { id: "w20", title: "Institutional: Digital Trust", thumbnailUrl: "https://picsum.photos/seed/inst4/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-04-24T15:00:00Z" },
+  { id: "w21", title: "Live: Energy Markets", thumbnailUrl: "https://picsum.photos/seed/live6/640/360", badgeType: "LIVE", datetime: "2025-04-26T09:00:00Z" },
+  { id: "w22", title: "Scheduled: Trade Corridors", thumbnailUrl: "https://picsum.photos/seed/sched6/640/360", badgeType: "SCHEDULED", datetime: "2025-04-28T11:00:00Z" },
+  { id: "w23", title: "Subscribed: Water Security", thumbnailUrl: "https://picsum.photos/seed/new6/640/360", badgeType: "NEW", datetime: "2025-04-30T13:30:00Z" },
+  { id: "w24", title: "Institutional: Talent Mobility", thumbnailUrl: "https://picsum.photos/seed/inst5/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-05-02T10:00:00Z" },
 ];
 
-const heroGallery = [
-  {
-    url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600",
-    title: "Flagship seminar",
-    caption: "Hybrid briefing with institutional partners and scholars",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1600",
-    title: "Panel discussion",
-    caption: "Cross-regional roundtable on digital public infrastructure",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=1600",
-    title: "Academic cohort",
-    caption: "Collaborative working session with research fellows",
-  },
+const sectionsConfig = [
+  { title: "Live Webinars", filter: (w: Webinar) => w.badgeType === "LIVE" },
+  { title: "Scheduled", filter: (w: Webinar) => w.badgeType === "SCHEDULED" },
+  { title: "Subscribed", filter: (w: Webinar) => ["NEW"].includes(w.badgeType) },
+  { title: "Institutional", filter: (w: Webinar) => w.badgeType === "INSTITUTIONAL" },
 ];
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 export default function Home() {
-  const [theme, setTheme] = useState("all");
+  const heroRef = useRef<HTMLDivElement>(null);
+  const parallaxRef = useRef<HTMLDivElement>(null);
+  const carouselRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [heroVisibility, setHeroVisibility] = useState(1);
+  const [sectionElevate, setSectionElevate] = useState({ opacity: 0.86, translate: 8 });
   const [heroIndex, setHeroIndex] = useState(0);
+  const [focusedIndex, setFocusedIndex] = useState<Record<number, number>>({});
 
-  const filteredUpcoming = useMemo(() => {
-    if (theme === "all") return upcomingEvents;
-    return upcomingEvents.filter((event) => event.category === theme);
-  }, [theme]);
+  const sections = useMemo(
+    () =>
+      sectionsConfig.map((cfg) => ({
+        title: cfg.title,
+        items: sampleWebinars.filter(cfg.filter),
+      })),
+    []
+  );
 
-  const recentRecordings = useMemo(() => {
-    return recordings.slice(0, 4).map((recording) => {
-      const event = events.find((candidate) => candidate.id === recording.eventId);
-      return { recording, event };
-    });
+  useEffect(() => {
+    const onScroll = () => {
+      if (!heroRef.current) return;
+      const vh = window.innerHeight * 0.45; // fade over first 45vh
+      const scrollY = window.scrollY;
+      const progress = Math.min(Math.max(scrollY / vh, 0), 1);
+      const visibility = 1 - progress * 0.94; // fade to 0.06
+      setHeroVisibility(visibility);
+      setSectionElevate({
+        opacity: 0.86 + progress * 0.14,
+        translate: 8 - progress * 8,
+      });
+      if (parallaxRef.current) {
+        parallaxRef.current.style.transform = `translateY(${scrollY * 0.15}px)`; // slower move for depth
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setHeroIndex((previous) => (previous + 1) % heroGallery.length);
-    }, 4200);
+      setHeroIndex((prev) => (prev + 1) % sections[0].items.length || 1);
+    }, 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [sections]);
+
+  const scrollByDistance = (index: number, direction: "left" | "right") => {
+    const el = carouselRefs.current[index];
+    if (!el) return;
+    const distance = CARD_SCROLL_STEP * 3 * (direction === "left" ? -1 : 1);
+    el.scrollBy({ left: distance, behavior: "smooth" });
+  };
+
+  const handleKeyNav = (sectionIdx: number, itemIdx: number, direction: number) => {
+    const items = sections[sectionIdx].items;
+    if (!items.length) return;
+    const nextIdx = Math.min(Math.max(itemIdx + direction, 0), items.length - 1);
+    setFocusedIndex((prev) => ({ ...prev, [sectionIdx]: nextIdx }));
+    const nextEl = document.querySelector<HTMLElement>(`[data-card="${sectionIdx}-${nextIdx}"]`);
+    if (nextEl) nextEl.focus({ preventScroll: false });
+  };
+
+  const heroCard = sections[0].items[heroIndex % sections[0].items.length] || sections[0].items[0];
 
   return (
-    <div className="space-y-14">
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="grid gap-10 rounded-4xl border border-(--border-subtle) bg-surface p-10 shadow-(--shadow-card) lg:grid-cols-[1.4fr_1fr]"
+    <div className="page-shell">
+      <div
+        ref={heroRef}
+        className="hero hero--edge"
+        style={{
+          "--hero-visibility": heroVisibility,
+          pointerEvents: heroVisibility < 0.12 ? "none" : "auto",
+        }}
       >
-        <div className="space-y-6">
-          <Badge label="Academic + policy network" />
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-(--text-secondary)">Global Academic Forum</p>
-            <h1 className="text-4xl font-semibold leading-tight text-foreground lg:text-5xl">{pageContent.home.heroTitle}</h1>
-            <p className="max-w-2xl text-lg text-(--text-secondary)">{pageContent.home.heroSubtitle}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button size="lg" href="/events">
-              Explore calendar
-              <ArrowRight size={18} />
-            </Button>
-            <Button size="lg" variant="secondary" href="/auth/register">
-              Join as participant
-            </Button>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="rounded-3xl border border-(--border-subtle) bg-surface-alt/70 p-4">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-(--text-secondary)">
-                  <stat.icon size={14} />
-                  {stat.label}
-                </div>
-                <p className="mt-3 text-2xl font-semibold text-foreground">{stat.value}</p>
-              </div>
-            ))}
-          </div>
+        <div ref={parallaxRef} className="hero__bg" aria-hidden>
+          <Image src={HERO_IMAGE_URL} alt="BRICS webinar visual" fill priority sizes="100vw" style={{ objectFit: "cover" }} />
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.3em] text-(--text-secondary)">Flagship seminars</p>
-            <div className="flex gap-2">
-              <IconButton subtle aria-label="Previous hero image" onClick={() => setHeroIndex((previous) => (previous - 1 + heroGallery.length) % heroGallery.length)}>
-                <ChevronLeft size={16} />
-              </IconButton>
-              <IconButton subtle aria-label="Next hero image" onClick={() => setHeroIndex((previous) => (previous + 1) % heroGallery.length)}>
-                <ChevronRight size={16} />
-              </IconButton>
+        <div className="hero__overlay" aria-hidden />
+        <div className="hero__blur" aria-hidden />
+        <div className="hero__glow" aria-hidden />
+        <div className="hero__content">
+          <div className="hero__left">
+            <span className="hero__tag">CINEMATIC WEBINAR EXPERIENCE</span>
+            <h1 className="hero__title" tabIndex={0}>
+              TRINIX Global Network Platform
+            </h1>
+            <p className="hero__subtitle">Join secure, high-quality virtual conferences powered by India.</p>
+            <div className="hero__ctas">
+              <button className="btn btn--primary" aria-label="Join the platform now">
+                Join Now
+              </button>
+              <button className="btn btn--secondary" aria-label="Host a webinar">
+                Host Webinar
+              </button>
             </div>
-          </div>
-          <div className="relative overflow-hidden rounded-4xl border border-(--border-subtle) bg-surface-alt shadow-(--shadow-soft) min-h-[320px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={heroGallery[heroIndex].url}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.6 }}
-                className="absolute inset-0"
-              >
-                <Image
-                  src={heroGallery[heroIndex].url}
-                  alt={heroGallery[heroIndex].title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 640px"
-                  priority
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-[rgba(36,21,10,0.65)] via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-(--border-subtle) bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-(--text-secondary)">
-                    {heroGallery[heroIndex].title}
-                  </div>
-                  <p className="mt-2 text-sm font-semibold text-foreground drop-shadow-[0_1px_4px_rgba(0,0,0,0.28)]">
-                    {heroGallery[heroIndex].caption}
-                  </p>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-      </motion.section>
-
-      <section className="rounded-4xl border border-(--border-subtle) bg-surface p-8 shadow-(--shadow-card)">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 space-y-1">
-            <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Upcoming seminars & discussions</p>
-            <h2 className="text-3xl font-semibold text-foreground">Browse by academic theme</h2>
-          </div>
-          <Select value={theme} onChange={(event) => setTheme(event.target.value)}>
-            {themeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "All themes" : option}
-              </option>
-            ))}
-          </Select>
-          <Button variant="ghost" href="/events">
-            View full calendar
-            <ArrowRight size={16} />
-          </Button>
-        </div>
-        <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {filteredUpcoming.slice(0, 6).map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            {/* <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Featured institutions</p> */}
-            <h2 className="text-3xl font-semibold text-foreground">Featured institutions</h2>
-          </div>
-          <Button variant="ghost" href="/institutions/academic">
-            Browse academic institutions
-          </Button>
-        </div>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {institutions.map((institution) => (
-            <div key={institution.id} className="rounded-3xl border border-(--border-subtle) bg-white p-5">
-              <div className="flex items-center justify-between">
+            {heroCard && (
+              <div className="hero__highlight">
+                <div className="hero__highlight-badge">{heroCard.badgeType}</div>
                 <div>
-                  <p className="text-base font-semibold text-foreground">{institution.name}</p>
-                  <p className="text-xs uppercase tracking-[0.3em] text-(--text-secondary)">{institution.country}</p>
+                  <p className="hero__highlight-title">{heroCard.title}</p>
+                  <p className="hero__highlight-sub">{formatDate(heroCard.datetime)}</p>
                 </div>
-                <Badge label={institution.type.replace("_", " ")} variant="outline" />
               </div>
-              <p className="mt-3 text-sm text-(--text-secondary)">{institution.description}</p>
-              <div className="mt-4 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-(--text-secondary)">
-                <MapPin size={14} />
-                {institution.focus}
-              </div>
+            )}
+          </div>
+          <div className="hero__right" aria-hidden />
+        </div>
+      </div>
+
+      <main
+        className="content"
+        style={{
+          "--section-opacity": sectionElevate.opacity,
+          "--section-translate": `${sectionElevate.translate}px`,
+        }}
+      >
+        {sections.map((section, sectionIdx) => (
+          <section key={section.title} className="row">
+            <div className="row__header">
+              <h2 className="row__title">{section.title}</h2>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-6 rounded-4xl border border-(--border-subtle) bg-surface p-6 shadow-(--shadow-soft) lg:grid-cols-2">
-        <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Thematic series</p>
-          <h2 className="text-3xl font-semibold text-foreground">Multi-part diplomacy programs</h2>
-          <div className="space-y-4">
-            {series.map((entry) => (
-              <div key={entry.id} className="rounded-3xl border border-(--border-subtle) bg-surface-alt/70 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-lg font-semibold text-foreground">{entry.title}</p>
-                    <p className="text-xs uppercase tracking-[0.3em] text-(--text-secondary)">{entry.theme}</p>
-                  </div>
-                  <Button size="sm" variant="ghost" href={`/series/${entry.id}`}>
-                    View series
-                  </Button>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">{entry.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-3xl border border-(--border-subtle) bg-linear-to-br from-white to-surface-alt p-6">
-          <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Access clarity</p>
-          <h3 className="mt-2 text-2xl font-semibold text-foreground">Open, registered, institutional</h3>
-          <p className="mt-3 text-sm text-(--text-secondary)">
-            Each listing specifies how to participate. Institutional admins can request closed door cohorts while independent researchers join open or registered briefings instantly.
-          </p>
-          <ul className="mt-4 space-y-3 text-sm text-(--text-secondary)">
-            <li className="rounded-2xl border border-(--border-subtle) bg-white px-4 py-3">Open: stream publicly with moderated chat.</li>
-            <li className="rounded-2xl border border-(--border-subtle) bg-white px-4 py-3">Registered: participant profile required for Q&A.</li>
-            <li className="rounded-2xl border border-(--border-subtle) bg-white px-4 py-3">Institutional: curated rosters, analytics, and resources.</li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="rounded-4xl border border-(--border-subtle) bg-surface p-6 shadow-(--shadow-soft)">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-(--text-secondary)">Recently recorded</p>
-            <h2 className="text-3xl font-semibold text-foreground">Highlights ready to watch</h2>
-          </div>
-          <Button variant="ghost" href="/recordings">
-            Open library
-          </Button>
-        </div>
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
-          {recentRecordings.map(({ recording, event }) => (
-            <div key={recording.id} className="rounded-3xl border border-(--border-subtle) bg-white p-5">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-(--text-secondary)">
-                <PlayCircle size={14} />
-                Recording
-              </div>
-              <h3 className="mt-2 text-xl font-semibold text-foreground">{event?.title}</h3>
-              <p className="text-sm text-(--text-secondary)">{event?.shortDescription}</p>
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-(--text-secondary)">
-                <span className="inline-flex items-center gap-2">
-                  <CalendarDays size={16} />
-                  {formatDateTime(event?.scheduledAt ?? recording.availableFrom)}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <MapPin size={16} />
-                  {event?.category}
-                </span>
-              </div>
-              {event && (
-                <p className="mt-2 text-xs uppercase tracking-[0.25em] text-(--text-secondary)">
-                  {formatDuration(event.durationMinutes)} · {event.accessLevel.replace("_", " ")}
-                </p>
+            <div className="row__container">
+              {section.items.length > 0 && (
+                <button
+                  type="button"
+                  className="row__arrow row__arrow--overlay row__arrow--left"
+                  aria-label={`Scroll ${section.title} left`}
+                  onClick={() => scrollByDistance(sectionIdx, "left")}
+                >
+                  ◀
+                </button>
               )}
-              <Button href={event ? `/events/${event.id}` : "/recordings"} variant="secondary" className="mt-4 w-full">
-                View details
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-4xl border border-(--border-subtle) bg-linear-to-r from-primary/90 to-secondary/90 p-10 text-white shadow-(--shadow-card)">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/70">Role-based workspaces</p>
-            <h2 className="text-3xl font-semibold">Participants, hosts, institutions, platform</h2>
-            <p className="max-w-2xl text-white/80">
-              Dedicated dashboards help academics manage registrations, hosts coordinate facilitation, institutions monitor cohorts, and platform admins review global metrics.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {roleSummaries.map((role) => (
-              <div key={role.role} className="rounded-3xl border border-white/40 bg-white/10 p-4 text-left">
-                <p className="text-sm font-semibold text-white">{role.title}</p>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/70">{role.role}</p>
-                <p className="mt-2 text-sm text-white/80">{role.description}</p>
+              <div
+                className="row__track"
+                ref={(el) => (carouselRefs.current[sectionIdx] = el)}
+                role="list"
+                aria-label={`${section.title} carousel`}
+              >
+                {section.items.map((item, itemIdx) => (
+                  <article
+                    key={item.id}
+                    role="listitem"
+                    className={`card ${section.title === "Subscribed" ? "card--subscribed" : ""}`}
+                    tabIndex={focusedIndex[sectionIdx] === itemIdx || (itemIdx === 0 && focusedIndex[sectionIdx] === undefined) ? 0 : -1}
+                    data-card={`${sectionIdx}-${itemIdx}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowRight") {
+                        e.preventDefault();
+                        handleKeyNav(sectionIdx, itemIdx, 1);
+                      } else if (e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        handleKeyNav(sectionIdx, itemIdx, -1);
+                      }
+                    }}
+                  >
+                    <div className="card__thumb">
+                      {(item.badgeType === "LIVE" || item.badgeType === "NEW") && <span className="card__badge">{item.badgeType}</span>}
+                      <Image src={item.thumbnailUrl} alt={item.title} fill sizes="220px" loading="lazy" style={{ objectFit: "cover" }} />
+                      <div className="card__overlay" />
+                    </div>
+                    {section.title === "Subscribed" && (
+                      <div className="card__subscribed-pill">
+                        <span aria-hidden="true">★</span> Subscribed
+                      </div>
+                    )}
+                    <div className="card__meta">
+                      <p className="card__title">{item.title}</p>
+                      <p className="card__subtitle">{formatDate(item.datetime)}</p>
+                    </div>
+                  </article>
+                ))}
+                {section.items.length === 0 && <div className="row__empty">No items available</div>}
               </div>
-            ))}
-          </div>
-          <Button size="lg" variant="ghost" href="/pricing" className="border-white/40 text-white hover:bg-white/10">
-            Compare access pathways
-          </Button>
-        </div>
-      </section>
+              {section.items.length > 0 && (
+                <button
+                  type="button"
+                  className="row__arrow row__arrow--overlay row__arrow--right"
+                  aria-label={`Scroll ${section.title} right`}
+                  onClick={() => scrollByDistance(sectionIdx, "right")}
+                >
+                  ▶
+                </button>
+              )}
+            </div>
+          </section>
+        ))}
+      </main>
     </div>
   );
 }
