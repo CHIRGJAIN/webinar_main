@@ -1,49 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { formatDate, sampleWebinars, type Webinar } from "./data/webinars";
 import "./home.css";
 
-type BadgeType = "LIVE" | "SCHEDULED" | "NEW" | "INSTITUTIONAL";
-
-type Webinar = {
-  id: string;
-  title: string;
-  thumbnailUrl: string;
-  badgeType: BadgeType;
-  datetime: string;
-};
-
 const HERO_IMAGE_URL = "https://picsum.photos/seed/brics-hero/2000/1200"; // replace with your BRICS/global webinar hero image
-const CARD_SCROLL_STEP = 236; // (220px card + 16px gap) * 1 card; used for arrow navigation
-
-const sampleWebinars: Webinar[] = [
-  { id: "w1", title: "Live: Sustainable Trade Routes", thumbnailUrl: "https://picsum.photos/seed/live1/640/360", badgeType: "LIVE", datetime: "2025-03-12T14:00:00Z" },
-  { id: "w2", title: "Digital Public Infra Forum", thumbnailUrl: "https://picsum.photos/seed/live2/640/360", badgeType: "LIVE", datetime: "2025-03-12T16:30:00Z" },
-  { id: "w3", title: "BRICS Climate Dialogue", thumbnailUrl: "https://picsum.photos/seed/sched1/640/360", badgeType: "SCHEDULED", datetime: "2025-03-15T10:00:00Z" },
-  { id: "w4", title: "New: Health Tech Cohort", thumbnailUrl: "https://picsum.photos/seed/new1/640/360", badgeType: "NEW", datetime: "2025-03-18T09:30:00Z" },
-  { id: "w5", title: "Institutional Analytics", thumbnailUrl: "https://picsum.photos/seed/inst1/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-03-20T12:00:00Z" },
-  { id: "w6", title: "Cross-border Education", thumbnailUrl: "https://picsum.photos/seed/sched2/640/360", badgeType: "SCHEDULED", datetime: "2025-03-22T13:00:00Z" },
-  { id: "w7", title: "Energy Transition Brief", thumbnailUrl: "https://picsum.photos/seed/sub1/640/360", badgeType: "NEW", datetime: "2025-03-25T15:30:00Z" },
-  { id: "w8", title: "Policy Lab: AI Safety", thumbnailUrl: "https://picsum.photos/seed/sub2/640/360", badgeType: "NEW", datetime: "2025-03-28T11:00:00Z" },
-  { id: "w9", title: "Global Health Forum", thumbnailUrl: "https://picsum.photos/seed/live3/640/360", badgeType: "LIVE", datetime: "2025-04-01T12:00:00Z" },
-  { id: "w10", title: "Energy Security Roundtable", thumbnailUrl: "https://picsum.photos/seed/sched3/640/360", badgeType: "SCHEDULED", datetime: "2025-04-03T09:30:00Z" },
-  { id: "w11", title: "Trade Policy Deep Dive", thumbnailUrl: "https://picsum.photos/seed/new3/640/360", badgeType: "NEW", datetime: "2025-04-05T15:00:00Z" },
-  { id: "w12", title: "Institutional Governance", thumbnailUrl: "https://picsum.photos/seed/inst2/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-04-08T10:00:00Z" },
-  { id: "w13", title: "Live: Maritime Corridors", thumbnailUrl: "https://picsum.photos/seed/live4/640/360", badgeType: "LIVE", datetime: "2025-04-10T14:00:00Z" },
-  { id: "w14", title: "Scheduled: Green Finance", thumbnailUrl: "https://picsum.photos/seed/sched4/640/360", badgeType: "SCHEDULED", datetime: "2025-04-12T09:00:00Z" },
-  { id: "w15", title: "Subscribed: Cultural Exchange", thumbnailUrl: "https://picsum.photos/seed/new4/640/360", badgeType: "NEW", datetime: "2025-04-14T11:30:00Z" },
-  { id: "w16", title: "Institutional: Education Pact", thumbnailUrl: "https://picsum.photos/seed/inst3/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-04-16T16:00:00Z" },
-  { id: "w17", title: "Live: Agri-Tech Cohort", thumbnailUrl: "https://picsum.photos/seed/live5/640/360", badgeType: "LIVE", datetime: "2025-04-18T12:00:00Z" },
-  { id: "w18", title: "Scheduled: Urban Resilience", thumbnailUrl: "https://picsum.photos/seed/sched5/640/360", badgeType: "SCHEDULED", datetime: "2025-04-20T10:30:00Z" },
-  { id: "w19", title: "Subscribed: Culture Summit", thumbnailUrl: "https://picsum.photos/seed/new5/640/360", badgeType: "NEW", datetime: "2025-04-22T17:30:00Z" },
-  { id: "w20", title: "Institutional: Digital Trust", thumbnailUrl: "https://picsum.photos/seed/inst4/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-04-24T15:00:00Z" },
-  { id: "w21", title: "Live: Energy Markets", thumbnailUrl: "https://picsum.photos/seed/live6/640/360", badgeType: "LIVE", datetime: "2025-04-26T09:00:00Z" },
-  { id: "w22", title: "Scheduled: Trade Corridors", thumbnailUrl: "https://picsum.photos/seed/sched6/640/360", badgeType: "SCHEDULED", datetime: "2025-04-28T11:00:00Z" },
-  { id: "w23", title: "Subscribed: Water Security", thumbnailUrl: "https://picsum.photos/seed/new6/640/360", badgeType: "NEW", datetime: "2025-04-30T13:30:00Z" },
-  { id: "w24", title: "Institutional: Talent Mobility", thumbnailUrl: "https://picsum.photos/seed/inst5/640/360", badgeType: "INSTITUTIONAL", datetime: "2025-05-02T10:00:00Z" },
-];
+const VISIBLE_CARD_COUNT = 5; // show five cards per section before scrolling
 
 const sectionsConfig = [
   { title: "Live Webinars", filter: (w: Webinar) => w.badgeType === "LIVE" },
@@ -51,9 +16,6 @@ const sectionsConfig = [
   { title: "Subscribed", filter: (w: Webinar) => ["NEW"].includes(w.badgeType) },
   { title: "Institutional", filter: (w: Webinar) => w.badgeType === "INSTITUTIONAL" },
 ];
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -104,7 +66,15 @@ export default function Home() {
   const scrollByDistance = (index: number, direction: "left" | "right") => {
     const el = carouselRefs.current[index];
     if (!el) return;
-    const distance = CARD_SCROLL_STEP * 3 * (direction === "left" ? -1 : 1);
+
+    const firstCard = el.querySelector<HTMLElement>(".card");
+    if (!firstCard) return;
+
+    const style = window.getComputedStyle(el);
+    const gap = parseFloat(style.columnGap || style.gap || "0") || 0;
+    const cardWidth = firstCard.getBoundingClientRect().width;
+    const distance = (cardWidth + gap) * VISIBLE_CARD_COUNT * (direction === "left" ? -1 : 1);
+
     el.scrollBy({ left: distance, behavior: "smooth" });
   };
 
@@ -179,23 +149,24 @@ export default function Home() {
               {section.items.length > 0 && (
                 <button
                   type="button"
-                  className="row__arrow row__arrow--overlay row__arrow--left"
+                  className="row__arrow row__arrow--inline row__arrow--inline-left"
                   aria-label={`Scroll ${section.title} left`}
                   onClick={() => scrollByDistance(sectionIdx, "left")}
                 >
-                  ◀
+                  {"<"}
                 </button>
               )}
               <div
-              className="row__track"
-              ref={(el) => {
-                carouselRefs.current[sectionIdx] = el;
-              }}
-              role="list"
-              aria-label={`${section.title} carousel`}
-            >
+                className="row__track"
+                ref={(el) => {
+                  carouselRefs.current[sectionIdx] = el;
+                }}
+                role="list"
+                aria-label={`${section.title} carousel`}
+                style={{ ["--cards-visible" as any]: VISIBLE_CARD_COUNT }}
+              >
                 {section.items.map((item, itemIdx) => (
-                  <article
+                  <Link
                     key={item.id}
                     role="listitem"
                     className={`card ${section.title === "Subscribed" ? "card--subscribed" : ""}`}
@@ -210,6 +181,7 @@ export default function Home() {
                         handleKeyNav(sectionIdx, itemIdx, -1);
                       }
                     }}
+                    href={`/webinar/${item.id}`}
                   >
                     <div className="card__thumb">
                       {(item.badgeType === "LIVE" || item.badgeType === "NEW") && <span className="card__badge">{item.badgeType}</span>}
@@ -218,14 +190,40 @@ export default function Home() {
                     </div>
                     {section.title === "Subscribed" && (
                       <div className="card__subscribed-pill">
-                        <span aria-hidden="true">★</span> Subscribed
+                        <span aria-hidden="true">*</span> Subscribed
                       </div>
                     )}
-                    <div className="card__meta">
+                    <div className="card__meta card__meta--base">
                       <p className="card__title">{item.title}</p>
                       <p className="card__subtitle">{formatDate(item.datetime)}</p>
                     </div>
-                  </article>
+                    {(() => {
+                      const year = new Date(item.datetime).getFullYear();
+                      const meta = `${year} • U/A 13+ • Hindi • Drama`;
+                      const desc = `Navigating a premium live stream on ${item.title}. Join and participate in real time.`;
+                      return (
+                        <div className="card__hover-card" aria-hidden="true">
+                          <div className="card__hover-bg" style={{ backgroundImage: `url(${item.thumbnailUrl})` }} />
+                          <div className="card__hover-gradient" />
+                          <div className="card__hover-inner">
+                            <div className="card__hover-panel">
+                              <p className="card__hover-title">{item.title}</p>
+                              <div className="card__hover-actions">
+                                <button className="card__hover-btn card__hover-btn--primary">
+                                  <span aria-hidden="true">▶</span> Watch Now
+                                </button>
+                                <button className="card__hover-btn card__hover-btn--ghost" aria-label="Add to list">
+                                  +
+                                </button>
+                              </div>
+                              <div className="card__hover-meta">{meta}</div>
+                              <p className="card__hover-desc">{desc}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </Link>
                 ))}
                 {section.items.length === 0 && <div className="row__empty">No items available</div>}
               </div>
@@ -236,7 +234,7 @@ export default function Home() {
                   aria-label={`Scroll ${section.title} right`}
                   onClick={() => scrollByDistance(sectionIdx, "right")}
                 >
-                  ▶
+                  {">"}
                 </button>
               )}
             </div>
