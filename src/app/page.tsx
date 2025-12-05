@@ -25,6 +25,7 @@ export default function Home() {
   const [sectionElevate, setSectionElevate] = useState({ opacity: 0.86, translate: 8 });
   const [heroIndex, setHeroIndex] = useState(0);
   const [focusedIndex, setFocusedIndex] = useState<Record<number, number>>({});
+  const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null);
 
   const sections = useMemo(
     () =>
@@ -63,6 +64,27 @@ export default function Home() {
     return () => clearInterval(id);
   }, [sections]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedWebinar(null);
+      }
+    };
+    if (selectedWebinar) {
+      document.addEventListener("keydown", onKey);
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [selectedWebinar]);
+
   const scrollByDistance = (index: number, direction: "left" | "right") => {
     const el = carouselRefs.current[index];
     if (!el) return;
@@ -98,7 +120,7 @@ export default function Home() {
   };
 
   return (
-    <div className="page-shell">
+    <div className="page-shell" data-modal-open={selectedWebinar ? "true" : "false"}>
       <div
         ref={heroRef}
         className="hero hero--edge"
@@ -157,14 +179,13 @@ export default function Home() {
                 </button>
               )}
               <div
-                className="row__track"
+                className="row__scroll"
                 ref={(el) => {
                   carouselRefs.current[sectionIdx] = el;
                 }}
-                role="list"
                 aria-label={`${section.title} carousel`}
-                style={{ ["--cards-visible" as any]: VISIBLE_CARD_COUNT }}
               >
+              <div className="row__track" role="list" style={{ ["--cards-visible" as any]: VISIBLE_CARD_COUNT }}>
                 {section.items.map((item, itemIdx) => (
                   <Link
                     key={item.id}
@@ -182,50 +203,58 @@ export default function Home() {
                       }
                     }}
                     href={`/webinar/${item.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedWebinar(item);
+                    }}
                   >
-                    <div className="card__thumb">
-                      {(item.badgeType === "LIVE" || item.badgeType === "NEW") && <span className="card__badge">{item.badgeType}</span>}
-                      <Image src={item.thumbnailUrl} alt={item.title} fill sizes="220px" loading="lazy" style={{ objectFit: "cover" }} />
-                      <div className="card__overlay" />
-                    </div>
-                    {section.title === "Subscribed" && (
-                      <div className="card__subscribed-pill">
-                        <span aria-hidden="true">*</span> Subscribed
+                      <div className="card__thumb">
+                        {(item.badgeType === "LIVE" || item.badgeType === "NEW") && <span className="card__badge">{item.badgeType}</span>}
+                        <Image src={item.thumbnailUrl} alt={item.title} fill sizes="220px" loading="lazy" style={{ objectFit: "cover" }} />
+                        <div className="card__overlay" />
                       </div>
-                    )}
-                    <div className="card__meta card__meta--base">
-                      <p className="card__title">{item.title}</p>
-                      <p className="card__subtitle">{formatDate(item.datetime)}</p>
-                    </div>
-                    {(() => {
-                      const year = new Date(item.datetime).getFullYear();
-                      const meta = `${year} • U/A 13+ • Hindi • Drama`;
-                      const desc = `Navigating a premium live stream on ${item.title}. Join and participate in real time.`;
-                      return (
-                        <div className="card__hover-card" aria-hidden="true">
-                          <div className="card__hover-bg" style={{ backgroundImage: `url(${item.thumbnailUrl})` }} />
-                          <div className="card__hover-gradient" />
-                          <div className="card__hover-inner">
-                            <div className="card__hover-panel">
-                              <p className="card__hover-title">{item.title}</p>
+                      {section.title === "Subscribed" && (
+                        <div className="card__subscribed-pill">
+                          <span aria-hidden="true">*</span> Subscribed
+                        </div>
+                      )}
+                      <div className="card__meta card__meta--base">
+                        <p className="card__title">{item.title}</p>
+                        <p className="card__subtitle">{formatDate(item.datetime)}</p>
+                      </div>
+                      {(() => {
+                        const year = new Date(item.datetime).getFullYear();
+                        const hoverMeta = [String(year), "U/A 13+", "Hindi", "Reality", "Comedy"];
+                        const desc = `${item.title} — Join live to participate in polls, Q&A, and watch with the community.`;
+                        return (
+                          <div className="card__hover-card" aria-hidden="true">
+                            <div className="card__hover-bg" style={{ backgroundImage: `url(${item.thumbnailUrl})` }}>
+                              <div className="card__hover-gradient" />
+                            </div>
+                            <div className="card__hover-content">
                               <div className="card__hover-actions">
-                                <button className="card__hover-btn card__hover-btn--primary">
-                                  <span aria-hidden="true">▶</span> Watch Now
+                                <button className="card__hover-btn card__hover-btn--play">
+                                  <span aria-hidden="true">▶</span>
+                                  Watch Now
                                 </button>
-                                <button className="card__hover-btn card__hover-btn--ghost" aria-label="Add to list">
+                                <button className="card__hover-btn card__hover-btn--icon" aria-label="Add to list">
                                   +
                                 </button>
                               </div>
-                              <div className="card__hover-meta">{meta}</div>
+                              <div className="card__hover-meta">
+                                {hoverMeta.map((metaItem) => (
+                                  <span key={metaItem}>{metaItem}</span>
+                                ))}
+                              </div>
                               <p className="card__hover-desc">{desc}</p>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })()}
-                  </Link>
-                ))}
-                {section.items.length === 0 && <div className="row__empty">No items available</div>}
+                        );
+                      })()}
+                    </Link>
+                  ))}
+                  {section.items.length === 0 && <div className="row__empty">No items available</div>}
+                </div>
               </div>
               {section.items.length > 0 && (
                 <button
@@ -241,6 +270,104 @@ export default function Home() {
           </section>
         ))}
       </main>
+
+      {selectedWebinar && (
+        <div className="modal" role="dialog" aria-modal="true" aria-label={selectedWebinar.title}>
+          <div className="modal__backdrop" onClick={() => setSelectedWebinar(null)} />
+          <div className="modal__panel" role="document">
+            <button className="modal__close" aria-label="Close details" onClick={() => setSelectedWebinar(null)}>
+              ×
+            </button>
+            <div className="modal__media">
+              <div
+                className="modal__media-bg"
+                style={{ backgroundImage: `url(${selectedWebinar.thumbnailUrl})` }}
+                aria-hidden="true"
+              />
+              <div className="modal__media-gradient" aria-hidden="true" />
+            </div>
+            <div className="modal__video">
+              <video
+                controls
+                preload="metadata"
+                poster={selectedWebinar.thumbnailUrl}
+              >
+                <source src="https://cdn.coverr.co/videos/coverr-the-khaptad-national-park-7893/1080p.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div className="modal__body">
+              <div className="modal__eyebrow">
+                <span className="modal__badge">{selectedWebinar.badgeType}</span>
+                <span className="modal__meta-chip">New Season</span>
+              </div>
+              <h3 className="modal__title">{selectedWebinar.title}</h3>
+              <div className="modal__meta">
+                <span>{new Date(selectedWebinar.datetime).getFullYear()}</span>
+                <span>&bull;</span>
+                <span>U/A 13+</span>
+                <span>&bull;</span>
+                <span>Hindi</span>
+              </div>
+              <p className="modal__desc">
+                Triple the laughter and double the debates. Join live to take polls, drop your questions, and watch
+                with the community in real time.
+              </p>
+              <div className="modal__tags">
+                {["Reality", "Policy", "Comedy", "Quirky"].map((tag) => (
+                  <span key={tag} className="modal__tag">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="modal__section">
+                <h4 className="modal__section-title">Agenda</h4>
+                <ul className="modal__list">
+                  {[
+                    "Opening insight: regional cooperation and climate tech (10 min)",
+                    "Live keynote from guest institution (20 min)",
+                    "Audience Q&A + moderated poll results (15 min)",
+                    "Breakout takeaways and closing actions (10 min)",
+                  ].map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="modal__section">
+                <h4 className="modal__section-title">Speakers & Hosts</h4>
+                <div className="modal__pill-row">
+                  {["Dr. Anika Rao - Policy Lead", "Rahul Mehta - Host", "Sara Lim - Research Fellow", "Carlos Estevez - Tech Strategist"].map((person) => (
+                    <span key={person} className="modal__pill">
+                      {person}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="modal__section">
+                <h4 className="modal__section-title">Related Sessions</h4>
+                <div className="modal__related">
+                  {sampleWebinars
+                    .filter((w) => w.id !== selectedWebinar.id)
+                    .slice(0, 4)
+                    .map((rel) => (
+                      <Link key={rel.id} href={`/webinar/${rel.id}`} className="modal__related-card">
+                        <span className="modal__related-thumb" style={{ backgroundImage: `url(${rel.thumbnailUrl})` }} aria-hidden="true" />
+                        <span className="modal__related-title">{rel.title}</span>
+                        <span className="modal__related-meta">{formatDate(rel.datetime)}</span>
+                      </Link>
+                    ))}
+                </div>
+              </div>
+              <div className="modal__actions">
+                <button className="modal__cta modal__cta--primary">
+                  ▶ Watch Now
+                </button>
+                <button className="modal__cta modal__cta--ghost">+ My List</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
